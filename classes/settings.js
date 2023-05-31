@@ -1,14 +1,49 @@
 class Settings {
-    // json_general = JSON.parse(document.getElementById("id_s_block_barra_progreso_json_string").value);
-    // input_hidden = document.getElementById("id_s_block_barra_progreso_json_string");
-    json_general = (document.getElementById("id_s_block_barra_progreso_json_string").value != "") ? JSON.parse(document.getElementById("id_s_block_barra_progreso_json_string").value) : [];
+    datos_lista_plantillas = (document.getElementById("id_s_block_barra_progreso_json_string").value != "") ? JSON.parse(document.getElementById("id_s_block_barra_progreso_json_string").value) : [];
 
-    abrir_gestionar_plantilla(){
-        let ventana_modal_settings = document.getElementById("ventana_modal_settings");
-        let boton_gestionar_plantillas = document.getElementById("boton_gestionar_plantillas");
-        
-        ventana_modal_settings.style.display = "flex";
-        boton_gestionar_plantillas.style.display = "none";
+    actualizar_lista_plantillas(){
+        document.getElementById("lista_plantillas").innerHTML = "";
+
+        if(this.datos_lista_plantillas.length == 0){
+            document.getElementById("lista_plantillas").innerHTML = "<li><span>Aun no existen plantillas.</span></li>";
+        }
+
+        for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
+            let value_esta_plantilla = Object.values(this.datos_lista_plantillas[i])[0];
+            // let key_esta_plantilla = Object.keys(this.datos_lista_plantillas[i])[0];
+            
+            let li_elemento = document.createElement("li");
+            li_elemento.className = "elemento_plantillas";
+            li_elemento.id = "elemento_" + value_esta_plantilla.nombre_plantilla.replaceAll(" ","_");
+            li_elemento.innerHTML = value_esta_plantilla.nombre_plantilla; 
+
+            let editar_button_plantilla = document.createElement("button");
+            editar_button_plantilla.className = "editar_plantilla";
+            editar_button_plantilla.type = "button";
+            editar_button_plantilla.innerHTML = '<i class="icon fa fa-pencil fa-fw" aria-hidden="true"></i>';
+            editar_button_plantilla.addEventListener("click", function(){
+                console.log('editando');
+            });
+            
+            let borrar_button_plantilla = document.createElement("button");
+            borrar_button_plantilla.className = "borrar_plantilla";
+            borrar_button_plantilla.type = "button";
+            borrar_button_plantilla.innerHTML = '<i class="icon fa fa-trash fa-fw" aria-hidden="true"></i>';
+            borrar_button_plantilla.addEventListener("click", function(){
+                console.log('borrando');
+            });
+
+            let campo_oculto_ponderacion = document.createElement("input");
+            campo_oculto_ponderacion.type = "hidden";
+            campo_oculto_ponderacion.className = "campo_oculto_plantilla";
+            campo_oculto_ponderacion.value = JSON.stringify(this.datos_lista_plantillas[i]);
+
+            li_elemento.appendChild(editar_button_plantilla);
+            li_elemento.appendChild(borrar_button_plantilla);
+            li_elemento.appendChild(campo_oculto_ponderacion);
+
+            document.getElementById("lista_plantillas").appendChild(li_elemento);
+        }
     }
 
     abrir_crear_plantilla(){
@@ -52,8 +87,8 @@ class Settings {
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
             return;
         }else{
-            for (let i = 0; i < this.json_general.length; i++) {
-                let nombre_id = Object.keys(this.json_general[i])[0];
+            for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
+                let nombre_id = Object.keys(this.datos_lista_plantillas[i])[0];
                 if("plantilla_" + plantilla.nombre_plantilla == nombre_id){
                     error_mensaje_nombre_plantilla.style.display = "block";
                     error_mensaje_nombre_plantilla.innerHTML = "⚠️ Ya existe una plantilla con este nombre";
@@ -85,18 +120,57 @@ class Settings {
             error_mensaje_ponderaciones_plantilla.style.display = "none";
             error_mensaje_ponderaciones_plantilla.innerHTML = "";
         }
+        
+        this.datos_lista_plantillas.push(objPlantilla);
+        document.getElementById("id_s_block_barra_progreso_json_string").value = JSON.stringify(this.datos_lista_plantillas);
+        this.actualizar_lista_plantillas();
+        this.limpiar_crear_plantilla();
+    }
 
-        let li_elemento = document.createElement("li");
-        li_elemento.className = "elemento_plantillas";
-        li_elemento.id = "elemento_" + plantilla.nombre_plantilla.replaceAll(" ","_");
-        li_elemento.innerHTML = plantilla.nombre_plantilla; 
+    limpiar_crear_plantilla(){
+        let ventana_crear = document.getElementById("ventana_crear");
+        let crear_plantilla = document.getElementById("crear_plantilla");
+        let input_nombre_plantilla = document.getElementById("input_nombre_plantilla");
+        let total_ponderaciones = document.getElementById("total_ponderaciones");
+        let lista_ponderaciones = document.getElementById("lista_ponderaciones");
+        let array_item_checkbox_categorias = document.getElementsByClassName("item_checkbox_categorias");
+        // let input_porcentaje_ponderacion = document.getElementById("input_porcentaje_ponderacion");
 
-        console.log(li_elemento);
+        crear_plantilla.style.display = "block";
+        ventana_crear.style.display = "none";
+        input_nombre_plantilla.value = "";
+        total_ponderaciones.innerHTML = "0%";
+        lista_ponderaciones.innerHTML = '<li id="item_lista_vacia_ponderaciones">Ninguna</li>';
+        // input_porcentaje_ponderacion.value = 0;
+        // // let input_porcentaje_ponderacion = document.getElementById("input_porcentaje_ponderacion");
+        for (let i = 0; i < array_item_checkbox_categorias.length; i++) {
+            if(array_item_checkbox_categorias[i].id == "todas_categorias"){
+                array_item_checkbox_categorias[i].checked = true;
+            }else{
+                array_item_checkbox_categorias[i].checked = false;
+            } 
+        }
+        this.limpiar_crear_ponderacion();
+    }
 
-        // "plantilla_"+document.getElementById("input_nombre_plantilla").value.replaceAll(" ","_")
-        // console.log(plantilla)
-        this.json_general.push(objPlantilla);
-        // console.log(this.json_general);
+    limpiar_crear_ponderacion(){
+        let contenedor_crear_editar_ponderaciones = document.getElementById("contenedor_crear_editar_ponderaciones");
+        let boton_aniadir_ponderacion = document.getElementById("boton_aniadir_ponderacion");
+        let input_palabra_clave = document.getElementById("input_palabra_clave");
+        let input_porcentaje_ponderacion = document.getElementById("input_porcentaje_ponderacion");
+        let array_item_checkbox_modulos = document.getElementsByClassName("item_checkbox_modulos");
+
+        contenedor_crear_editar_ponderaciones.style.display = "none";
+        boton_aniadir_ponderacion.style.display = "inline-block";
+        input_palabra_clave.value = "";
+        input_porcentaje_ponderacion.value = 0;
+        for (let i = 0; i < array_item_checkbox_modulos.length; i++) {
+            if(array_item_checkbox_modulos[i].id == "todos_modulos"){
+                array_item_checkbox_modulos[i].checked = true;
+            }else{
+                array_item_checkbox_modulos[i].checked = false;
+            } 
+        }
     }
 
     editar_ponderacion(ponderacion){
@@ -220,6 +294,7 @@ class Settings {
         }
 
         document.getElementById("total_ponderaciones").innerHTML = (parseInt(document.getElementById("total_ponderaciones").innerHTML) + ponderacion.porcentaje) + "%";
+        this.limpiar_crear_ponderacion();
     }
 
     abrir_crear_ponderacion(){
@@ -231,13 +306,15 @@ class Settings {
     }
 
     inicializar_settings(){
+        this.actualizar_lista_plantillas();
+
         document.getElementById("boton_crear_plantilla").addEventListener("click", function(){
             this.crear_plantilla();
         }.bind(this));
 
-        document.getElementById("boton_gestionar_plantillas").addEventListener("click", function(){
-            this.abrir_gestionar_plantilla();
-        }.bind(this));
+        // document.getElementById("boton_gestionar_plantillas").addEventListener("click", function(){
+        //     this.abrir_gestionar_plantilla();
+        // }.bind(this));
         
         document.getElementById("crear_plantilla").addEventListener("click", function(){
             this.abrir_crear_plantilla();

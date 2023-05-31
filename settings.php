@@ -16,38 +16,6 @@ $barra_progreso = new Barra_progreso();
 
 <?php
 
-$settings->add(new admin_setting_heading(
-    'headerconfig',
-    'cabecera',
-    'subcabecera'
-));
-
-$settings->add(new admin_setting_configtext(
-    'block_barra_progreso/titulo_bloque',
-    'Título del bloque',
-    'Esto cambiará el nombre del título que aparecerá en el bloque.',
-    ''
-));
-
-
-// $html = '
-// <div id="contenedor_ventana_modal_settings">
-//     <button type="button" id="boton_gestionar_plantillas" class="boton_settings">Gestionar plantillas</button>
-//     <div id="ventana_modal_settings" style="display:none;">
-//         <div id="ventana_gestionar_plantillas">
-//             <span>Plantillas:</span>
-//             <ul id="lista_gestionar_plantillas">
-//                 <li>Aun no existen plantillas.</li>
-//             </ul>
-//         </div>
-//         <button type="button" id="crear_plantilla">Crear nueva plantilla</button>
-//         <div id="ventana_crear">
-//         </div>
-//     </div>
-// </div>
-// ';
-
-
 $categorias = "";
 foreach ($barra_progreso->sacar_categorias() as $categoria) {
     $categorias .= '
@@ -82,8 +50,7 @@ foreach ($barra_progreso->sacar_todos_modulos() as $modulo => $url_modulo) {
 
 $html = '
 <div id="contenedor_ventana_modal_settings">
-    <button type="button" id="boton_gestionar_plantillas" class="boton_settings">Gestionar plantillas</button>
-    <div id="ventana_modal_settings" style="display:none;">
+    <div id="ventana_modal_settings">
         <div id="ventana_gestionar_plantillas">
             <span>Plantillas:</span>
             <ul id="lista_plantillas">
@@ -165,24 +132,12 @@ $html = '
 </div>
 ';
 
-$array = [0 => "-"];
-if(get_config('block_barra_progreso', 'json_string')){
-    foreach(json_decode(get_config('block_barra_progreso', 'json_string')) as $key => $valor){
-        $array[$key] = $valor->nombre;
-    }
-    
-    $cuenta_array = count($array) + 10;
-    for ($i=count($array); $i < $cuenta_array; $i++) { 
-        $array[$i] = $i;
-    }
-}
 
-$settings->add(new admin_setting_configselect(
-    'block_barra_progreso/plantilla',
-    'Plantilla por defecto:', 
-    $html,
-    0,
-    $array
+$settings->add(new admin_setting_configtext(
+    'block_barra_progreso/titulo_bloque',
+    'Título del bloque',
+    'Esto cambiará el nombre del título que aparecerá en el bloque.',
+    ''
 ));
 
 $settings->add(new admin_setting_configtext(
@@ -191,6 +146,8 @@ $settings->add(new admin_setting_configtext(
     '',
     ''
 ));
+
+$settings->add(new admin_setting_heading('contenedor_gestion_plantillas', 'Gestionar plantillas', $html));
 
 // $settings->add(new admin_setting_configtext(
 //     'block_barra_progreso/hidden_script',
