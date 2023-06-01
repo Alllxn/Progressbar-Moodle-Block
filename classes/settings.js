@@ -10,20 +10,18 @@ class Settings {
 
         for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
             let value_esta_plantilla = Object.values(this.datos_lista_plantillas[i])[0];
-            // let key_esta_plantilla = Object.keys(this.datos_lista_plantillas[i])[0];
             
             let li_elemento = document.createElement("li");
             li_elemento.className = "elemento_plantillas";
             li_elemento.id = "elemento_" + value_esta_plantilla.nombre_plantilla.replaceAll(" ","_");
-            li_elemento.innerHTML = value_esta_plantilla.nombre_plantilla; 
 
             let editar_button_plantilla = document.createElement("button");
             editar_button_plantilla.className = "editar_plantilla";
             editar_button_plantilla.type = "button";
             editar_button_plantilla.innerHTML = '<i class="icon fa fa-pencil fa-fw" aria-hidden="true"></i>';
             editar_button_plantilla.addEventListener("click", function(){
-                console.log('editando');
-            });
+                this.montar_editar_plantilla(this.datos_lista_plantillas[i]);
+            }.bind(this));
             
             let borrar_button_plantilla = document.createElement("button");
             borrar_button_plantilla.className = "borrar_plantilla";
@@ -33,28 +31,45 @@ class Settings {
                 console.log('borrando');
             });
 
-            let campo_oculto_ponderacion = document.createElement("input");
-            campo_oculto_ponderacion.type = "hidden";
-            campo_oculto_ponderacion.className = "campo_oculto_plantilla";
-            campo_oculto_ponderacion.value = JSON.stringify(this.datos_lista_plantillas[i]);
+            let contenedor_botones_plantilla = document.createElement("div");
+            contenedor_botones_plantilla.className = "contenedor_botones_plantilla";
 
-            li_elemento.appendChild(editar_button_plantilla);
-            li_elemento.appendChild(borrar_button_plantilla);
-            li_elemento.appendChild(campo_oculto_ponderacion);
+            let texto_plantilla = document.createElement("span");
+            texto_plantilla.innerHTML = value_esta_plantilla.nombre_plantilla;
+
+            contenedor_botones_plantilla.appendChild(editar_button_plantilla);
+            contenedor_botones_plantilla.appendChild(borrar_button_plantilla);
+            li_elemento.appendChild(texto_plantilla);
+            li_elemento.appendChild(contenedor_botones_plantilla);
 
             document.getElementById("lista_plantillas").appendChild(li_elemento);
         }
-    }
+    }    
 
     abrir_crear_plantilla(){
+        this.limpiar_crear_plantilla();
+
         let ventana_crear = document.getElementById("ventana_crear");
-        let crear_plantilla = document.getElementById("crear_plantilla");
-
         ventana_crear.style.display = "flex";
-        crear_plantilla.style.display = "none";
-    }
+        
+        document.getElementById("titulo_crear_editar_plantilla").innerHTML = "Crear nueva plantilla";
+        
+        if(document.getElementById("boton_editar_plantilla")){
+            document.getElementById("boton_editar_plantilla").remove();
+            let boton_crear_plantilla = document.createElement("button");
+                boton_crear_plantilla.type = "button";
+                boton_crear_plantilla.id = "boton_crear_plantilla";
+                boton_crear_plantilla.innerHTML = "Crear plantilla";
+                boton_crear_plantilla.addEventListener("click", function(){
+                    this.crear_plantilla();
+                }.bind(this));
 
+            document.getElementById("contenedor_boton_crear_editar_plantilla").appendChild(boton_crear_plantilla);
+        }
+    }
+    
     crear_plantilla(){
+        document.getElementById("titulo_crear_editar_plantilla").innerHTML = "Crear nueva plantilla";
         let objPlantilla = {
             ["plantilla_"+document.getElementById("input_nombre_plantilla").value.replaceAll(" ","_")] : {
                 nombre_plantilla: document.getElementById("input_nombre_plantilla").value,
@@ -69,7 +84,6 @@ class Settings {
         for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
             if(document.getElementsByClassName("item_checkbox_categorias")[i].checked){
                 plantilla.categorias.push(document.getElementsByClassName("item_checkbox_categorias")[i].value)
-                // plantilla.categorias[]
             }
         }
 
@@ -89,7 +103,7 @@ class Settings {
         }else{
             for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
                 let nombre_id = Object.keys(this.datos_lista_plantillas[i])[0];
-                if("plantilla_" + plantilla.nombre_plantilla == nombre_id){
+                if(Object.keys(objPlantilla)[0] == nombre_id){
                     error_mensaje_nombre_plantilla.style.display = "block";
                     error_mensaje_nombre_plantilla.innerHTML = "⚠️ Ya existe una plantilla con este nombre";
                     document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
@@ -127,6 +141,105 @@ class Settings {
         this.limpiar_crear_plantilla();
     }
 
+    montar_editar_plantilla(datos){
+        
+        this.abrir_crear_plantilla();
+        console.log(datos);
+        let id_esta_plantilla = Object.keys(datos)[0];
+        let valores_esta_plantilla = Object.values(datos)[0];
+        
+        document.getElementById("titulo_crear_editar_plantilla").innerHTML = "Editar plantilla "+valores_esta_plantilla.nombre_plantilla;
+        document.getElementById("input_nombre_plantilla").value = valores_esta_plantilla.nombre_plantilla;
+
+        for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
+            document.getElementsByClassName("item_checkbox_categorias")[i].checked = valores_esta_plantilla.categorias.includes(document.getElementsByClassName("item_checkbox_categorias")[i].value);
+        }
+
+        for (let i = 0; i < valores_esta_plantilla.ponderaciones.length; i++) {            
+           this.montar_ponderacion(valores_esta_plantilla.ponderaciones[i]);
+        }
+
+        if(document.getElementById("boton_crear_plantilla")){
+            document.getElementById("boton_crear_plantilla").remove();
+            let boton_editar_plantilla = document.createElement("button");
+                boton_editar_plantilla.type = "button";
+                boton_editar_plantilla.id = "boton_editar_plantilla";
+                boton_editar_plantilla.innerHTML = "Editar plantilla "+valores_esta_plantilla.nombre_plantilla;
+                boton_editar_plantilla.addEventListener("click", function(){
+                    this.editar_plantilla(id_esta_plantilla);
+                }.bind(this));
+
+            document.getElementById("contenedor_boton_crear_editar_plantilla").appendChild(boton_editar_plantilla);
+        }
+    }
+    
+    editar_plantilla(plantilla_editar){
+        this.limpiar_crear_plantilla();
+        // console.log(plantilla_editar);
+        // for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
+        //     if(Object.keys(this.datos_lista_plantillas[i])[0] == plantilla_editar){
+        //         console.log('lo encontré');
+        //     }            
+        // }
+
+        // console.log(this.datos_lista_plantillas[plantilla_editar])
+        console.log(this.datos_lista_plantillas)
+        console.log(this.datos_lista_plantillas[0])
+        // console.log(Object.values(this.datos_lista_plantillas)[0])
+
+
+        //[{"plantilla_plan_cabildo":{"nombre_plantilla":"plan cabildo","categorias":["Plan Cabildo"],"ponderaciones":[{"ponderacion_obligatorio":{"palabra_clave":"obligatorio","porcentaje":100,"modulos":["forum"]}}],"total_ponderaciones":100}}]
+
+    }
+
+    montar_ponderacion(datos){
+        let valores_esta_ponderación = Object.values(datos)[0];
+
+        let li_elemento = document.createElement("li");
+            li_elemento.id = "elemento_ponderacion_"+valores_esta_ponderación.palabra_clave.replace(/ /g, "_");
+            li_elemento.className = "elemento_ponderacion";
+            li_elemento.innerHTML = '<span class="contenedor_elementos_ponderacion"><span class="elemento_ponderacion_porcentaje">['+valores_esta_ponderación.porcentaje+'%]</span> '+
+            '<span class="elemento_ponderacion_palabra_clave">'+valores_esta_ponderación.palabra_clave+'</span></span>';
+
+        let boton_editar_ponderacion = document.createElement("button");
+            boton_editar_ponderacion.type = "button";
+            boton_editar_ponderacion.className = "boton_editar_ponderacion";
+            boton_editar_ponderacion.innerHTML = '<i class="icon fa fa-pencil fa-fw" aria-hidden="true"></i>';
+            boton_editar_ponderacion.addEventListener("click", function(){
+                this.editar_ponderacion(datos);
+            }.bind(this));
+
+        let boton_borrar_ponderacion = document.createElement("button");
+            boton_borrar_ponderacion.type = "button";
+            boton_borrar_ponderacion.className = "boton_borrar_ponderacion";
+            boton_borrar_ponderacion.innerHTML = '<i class="icon fa fa-trash fa-fw" aria-hidden="true"></i>';
+            boton_borrar_ponderacion.addEventListener("click", function(){
+                this.borrar_ponderacion(datos);
+            }.bind(this));
+
+        let contenedor_botones_ponderaciones = document.createElement("div");
+            contenedor_botones_ponderaciones.className = "contenedor_botones_plantilla";
+
+        contenedor_botones_ponderaciones.appendChild(boton_editar_ponderacion);
+        contenedor_botones_ponderaciones.appendChild(boton_borrar_ponderacion);
+        li_elemento.appendChild(contenedor_botones_ponderaciones);
+
+        document.getElementById("lista_ponderaciones").appendChild(li_elemento);
+        
+        if(document.getElementsByClassName("elemento_ponderacion").length != 0 && document.getElementById("item_lista_vacia_ponderaciones")){
+            document.getElementById("item_lista_vacia_ponderaciones").remove();
+        }
+    }
+
+
+
+    limpiar_todos_errores(){
+        for (let i = 0; i < document.getElementsByClassName("error_mensaje").length; i++) {
+            document.getElementsByClassName("error_mensaje")[i].innerHTML = "";
+            document.getElementsByClassName("error_mensaje")[i].style.display = "none";
+        }
+    }
+
     limpiar_crear_plantilla(){
         let ventana_crear = document.getElementById("ventana_crear");
         let crear_plantilla = document.getElementById("crear_plantilla");
@@ -134,15 +247,13 @@ class Settings {
         let total_ponderaciones = document.getElementById("total_ponderaciones");
         let lista_ponderaciones = document.getElementById("lista_ponderaciones");
         let array_item_checkbox_categorias = document.getElementsByClassName("item_checkbox_categorias");
-        // let input_porcentaje_ponderacion = document.getElementById("input_porcentaje_ponderacion");
 
         crear_plantilla.style.display = "block";
         ventana_crear.style.display = "none";
         input_nombre_plantilla.value = "";
         total_ponderaciones.innerHTML = "0%";
         lista_ponderaciones.innerHTML = '<li id="item_lista_vacia_ponderaciones">Ninguna</li>';
-        // input_porcentaje_ponderacion.value = 0;
-        // // let input_porcentaje_ponderacion = document.getElementById("input_porcentaje_ponderacion");
+        
         for (let i = 0; i < array_item_checkbox_categorias.length; i++) {
             if(array_item_checkbox_categorias[i].id == "todas_categorias"){
                 array_item_checkbox_categorias[i].checked = true;
@@ -150,6 +261,7 @@ class Settings {
                 array_item_checkbox_categorias[i].checked = false;
             } 
         }
+        this.limpiar_todos_errores();
         this.limpiar_crear_ponderacion();
     }
 
@@ -232,8 +344,17 @@ class Settings {
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
             return;
         }else{
-            error_mensaje_palabra_clave.style.display = "none";
-            error_mensaje_palabra_clave.innerHTML = "";
+            for (let i = 0; i < document.getElementsByClassName("elemento_ponderacion_palabra_clave").length; i++) {
+                if(ponderacion.palabra_clave == document.getElementsByClassName("elemento_ponderacion_palabra_clave")[i].innerHTML){
+                    error_mensaje_palabra_clave.style.display = "block";
+                    error_mensaje_palabra_clave.innerHTML = "⚠️ Esta palabra clave ya existe";
+                    document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
+                    return;
+                }else{
+                    error_mensaje_palabra_clave.style.display = "none";
+                    error_mensaje_palabra_clave.innerHTML = "";
+                }
+            }
         }
 
         if(ponderacion.modulos.length === 0){
@@ -256,42 +377,7 @@ class Settings {
             error_mensaje_ponderaciones.innerHTML = "";
         }
 
-        let li_elemento = document.createElement("li");
-        li_elemento.id = "elemento_ponderacion_"+ponderacion.palabra_clave.replace(/ /g, "_");
-        li_elemento.className = "elemento_ponderacion";
-        li_elemento.innerHTML = '<span class="elemento_ponderacion_porcentaje">['+ponderacion.porcentaje+'%]</span> '+
-        '<span class="elemento_ponderacion_palabra_clave">'+ponderacion.palabra_clave+'</span>';
-
-        let boton_editar_ponderacion = document.createElement("button");
-        boton_editar_ponderacion.type = "button";
-        boton_editar_ponderacion.className = "boton_editar_ponderacion";
-        boton_editar_ponderacion.innerHTML = '<i class="icon fa fa-pencil fa-fw" aria-hidden="true"></i>';
-        boton_editar_ponderacion.addEventListener("click", function(){
-            this.editar_ponderacion(ponderacion);
-        }.bind(this));
-
-        let boton_borrar_ponderacion = document.createElement("button");
-        boton_borrar_ponderacion.type = "button";
-        boton_borrar_ponderacion.className = "boton_borrar_ponderacion";
-        boton_borrar_ponderacion.innerHTML = '<i class="icon fa fa-trash fa-fw" aria-hidden="true"></i>';
-        boton_borrar_ponderacion.addEventListener("click", function(){
-            this.borrar_ponderacion(ponderacion);
-        }.bind(this));
-
-        let campo_oculto_ponderacion = document.createElement("input");
-        campo_oculto_ponderacion.type = "hidden";
-        campo_oculto_ponderacion.className = "campo_oculto_ponderacion";
-        campo_oculto_ponderacion.value = JSON.stringify(objPonderacion);
-
-        li_elemento.appendChild(boton_editar_ponderacion);
-        li_elemento.appendChild(boton_borrar_ponderacion);
-        li_elemento.appendChild(campo_oculto_ponderacion);
-
-        document.getElementById("lista_ponderaciones").appendChild(li_elemento);
-
-        if(document.getElementsByClassName("elemento_ponderacion").length != 0 && document.getElementById("item_lista_vacia_ponderaciones")){
-            document.getElementById("item_lista_vacia_ponderaciones").remove();
-        }
+        this.montar_ponderacion(objPonderacion);
 
         document.getElementById("total_ponderaciones").innerHTML = (parseInt(document.getElementById("total_ponderaciones").innerHTML) + ponderacion.porcentaje) + "%";
         this.limpiar_crear_ponderacion();
@@ -311,10 +397,6 @@ class Settings {
         document.getElementById("boton_crear_plantilla").addEventListener("click", function(){
             this.crear_plantilla();
         }.bind(this));
-
-        // document.getElementById("boton_gestionar_plantillas").addEventListener("click", function(){
-        //     this.abrir_gestionar_plantilla();
-        // }.bind(this));
         
         document.getElementById("crear_plantilla").addEventListener("click", function(){
             this.abrir_crear_plantilla();
