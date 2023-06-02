@@ -4,12 +4,9 @@ class Settings {
     actualizar_lista_plantillas(){
         document.getElementById("lista_plantillas").innerHTML = "";
 
-        if(this.datos_lista_plantillas.length == 0){
-            document.getElementById("lista_plantillas").innerHTML = "<li><span>Aun no existen plantillas.</span></li>";
-        }
 
         for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
-            let value_esta_plantilla = Object.values(this.datos_lista_plantillas[i])[0];
+            let value_esta_plantilla = this.datos_lista_plantillas[i];
             
             let li_elemento = document.createElement("li");
             li_elemento.className = "elemento_plantillas";
@@ -28,8 +25,8 @@ class Settings {
             borrar_button_plantilla.type = "button";
             borrar_button_plantilla.innerHTML = '<i class="icon fa fa-trash fa-fw" aria-hidden="true"></i>';
             borrar_button_plantilla.addEventListener("click", function(){
-                console.log('borrando');
-            });
+                this.borrar_plantilla(this.datos_lista_plantillas[i]);
+            }.bind(this));
 
             let contenedor_botones_plantilla = document.createElement("div");
             contenedor_botones_plantilla.className = "contenedor_botones_plantilla";
@@ -43,7 +40,14 @@ class Settings {
             li_elemento.appendChild(contenedor_botones_plantilla);
 
             document.getElementById("lista_plantillas").appendChild(li_elemento);
+
         }
+        
+        if(this.datos_lista_plantillas.length == 0){
+            document.getElementById("lista_plantillas").innerHTML = "<li><span>Aun no existen plantillas.</span></li>";
+        }
+
+        document.getElementById("id_s_block_barra_progreso_json_string").value = JSON.stringify(this.datos_lista_plantillas);
     }    
 
     abrir_crear_plantilla(){
@@ -70,16 +74,13 @@ class Settings {
     
     crear_plantilla(){
         document.getElementById("titulo_crear_editar_plantilla").innerHTML = "Crear nueva plantilla";
-        let objPlantilla = {
-            ["plantilla_"+document.getElementById("input_nombre_plantilla").value.replaceAll(" ","_")] : {
-                nombre_plantilla: document.getElementById("input_nombre_plantilla").value,
-                categorias : [],
-                ponderaciones: [],
-                total_ponderaciones : parseInt(document.getElementById("total_ponderaciones").innerHTML)
-            }
-        }
 
-        let plantilla = Object.values(objPlantilla)[0];
+        let plantilla = {
+            nombre_plantilla: document.getElementById("input_nombre_plantilla").value,
+            categorias : [],
+            ponderaciones: [],
+            total_ponderaciones : parseInt(document.getElementById("total_ponderaciones").innerHTML)
+        }
 
         for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
             if(document.getElementsByClassName("item_checkbox_categorias")[i].checked){
@@ -100,19 +101,14 @@ class Settings {
             error_mensaje_nombre_plantilla.innerHTML = "⚠️ Este campo no puede quedar vacío";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
             return;
+        }else if (this.datos_lista_plantillas.some(e => e.nombre_plantilla === plantilla.nombre_plantilla)) {
+            error_mensaje_nombre_plantilla.style.display = "block";
+            error_mensaje_nombre_plantilla.innerHTML = "⚠️ Ya existe una plantilla con este nombre";
+            document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
+            return;
         }else{
-            for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
-                let nombre_id = Object.keys(this.datos_lista_plantillas[i])[0];
-                if(Object.keys(objPlantilla)[0] == nombre_id){
-                    error_mensaje_nombre_plantilla.style.display = "block";
-                    error_mensaje_nombre_plantilla.innerHTML = "⚠️ Ya existe una plantilla con este nombre";
-                    document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-                    return;
-                }else{
-                    error_mensaje_nombre_plantilla.style.display = "none";
-                    error_mensaje_nombre_plantilla.innerHTML = "";
-                }
-            }
+            error_mensaje_nombre_plantilla.style.display = "none";
+            error_mensaje_nombre_plantilla.innerHTML = "";
         }
 
         if(plantilla.categorias.length == 0){
@@ -134,21 +130,15 @@ class Settings {
             error_mensaje_ponderaciones_plantilla.style.display = "none";
             error_mensaje_ponderaciones_plantilla.innerHTML = "";
         }
-
-        // console.log(objPlantilla);
         
-        this.datos_lista_plantillas.push(objPlantilla);
-        document.getElementById("id_s_block_barra_progreso_json_string").value = JSON.stringify(this.datos_lista_plantillas);
+        this.datos_lista_plantillas.push(plantilla);
         this.actualizar_lista_plantillas();
         this.limpiar_crear_plantilla();
     }
 
-    montar_editar_plantilla(datos){
+    montar_editar_plantilla(valores_esta_plantilla){
         
         this.abrir_crear_plantilla();
-        // console.log(datos);
-        let id_esta_plantilla = Object.keys(datos)[0];
-        let valores_esta_plantilla = Object.values(datos)[0];
         
         document.getElementById("titulo_crear_editar_plantilla").innerHTML = "Editar plantilla "+valores_esta_plantilla.nombre_plantilla;
         document.getElementById("input_nombre_plantilla").value = valores_esta_plantilla.nombre_plantilla;
@@ -168,7 +158,7 @@ class Settings {
                 boton_editar_plantilla.id = "boton_editar_plantilla";
                 boton_editar_plantilla.innerHTML = "Editar plantilla "+valores_esta_plantilla.nombre_plantilla;
                 boton_editar_plantilla.addEventListener("click", function(){
-                    this.editar_plantilla(datos);
+                    this.editar_plantilla(valores_esta_plantilla);
                 }.bind(this));
 
             document.getElementById("contenedor_boton_crear_editar_plantilla").appendChild(boton_editar_plantilla);
@@ -178,34 +168,44 @@ class Settings {
     editar_plantilla(plantilla_editar){
         let objetoBuscado = this.datos_lista_plantillas.find(elemento => elemento == plantilla_editar);
         let input_nombre_plantilla = document.getElementById("input_nombre_plantilla");
-        // let keyObjetoBuscado = Object.keys(objetoBuscado)[0];
-        // let valueObjetoBuscado = Object.values(objetoBuscado)[0];
-
-        // Object.keys(objetoBuscado)[0] = "plantilla_"+input_nombre_plantilla.value;
-        // Object.values(objetoBuscado)[0].nombre_plantilla = input_nombre_plantilla.value;
         
-        // let array_categorias = [];
-        // for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
-        //     if(document.getElementsByClassName("item_checkbox_categorias")[i].checked){
-        //         array_categorias.push(document.getElementsByClassName("item_checkbox_categorias")[i].value)
-        //     }
-        // }
+        let array_categorias = [];
+        for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
+            if(document.getElementsByClassName("item_checkbox_categorias")[i].checked){
+                array_categorias.push(document.getElementsByClassName("item_checkbox_categorias")[i].value)
+            }
+        }
 
-        // Object.values(objetoBuscado)[0].categorias = array_categorias;
+        let array_ponderaciones = [];
+        for (let i = 0; i < document.getElementsByClassName("campo_oculto_ponderacion").length; i++) {
+            array_ponderaciones.push(JSON.parse(document.getElementsByClassName("campo_oculto_ponderacion")[i].value))
+        }
 
-        // Object.values(objetoBuscado)[0] = {nombre_plantilla : "hola"};
-        // console.log(Object.values(objetoBuscado)[0]);
-        // objetoBuscado = "HOla";
-        const nombreObjeto = Object.keys(objetoBuscado)[0];
-        objetoBuscado[nombreObjeto]["nombre_plantilla"] = "nuevo nombre";
-        console.log(this.datos_lista_plantillas);
+        objetoBuscado.nombre_plantilla = input_nombre_plantilla.value;
+        objetoBuscado.categorias = array_categorias;
+        objetoBuscado.ponderaciones = array_categorias;
+        
+        this.actualizar_lista_plantillas();
         this.limpiar_crear_plantilla();
 
     }
 
-    montar_ponderacion(datos){
-        let valores_esta_ponderación = Object.values(datos)[0];
+    borrar_plantilla(plantilla_editar){
+        if (confirm("¿Está seguro de querer borrar la plantilla "+plantilla_editar.nombre_plantilla+"? no podrá recuperar los datos de esta plantilla.")) {
+            let objetoBuscado = this.datos_lista_plantillas.find(elemento => elemento == plantilla_editar);
+            let index = this.datos_lista_plantillas.indexOf(objetoBuscado);
 
+            if (index > -1) { // Si el objeto buscado se encuentra dentro del array de plantillas
+                this.datos_lista_plantillas.splice(index, 1);
+            }
+
+            this.actualizar_lista_plantillas();
+            this.limpiar_crear_plantilla();
+            console.log(this.datos_lista_plantillas);
+        }
+    }
+
+    montar_ponderacion(valores_esta_ponderación){
         let li_elemento = document.createElement("li");
             li_elemento.id = "elemento_ponderacion_"+valores_esta_ponderación.palabra_clave.replace(/ /g, "_");
             li_elemento.className = "elemento_ponderacion";
@@ -217,7 +217,7 @@ class Settings {
             boton_editar_ponderacion.className = "boton_editar_ponderacion";
             boton_editar_ponderacion.innerHTML = '<i class="icon fa fa-pencil fa-fw" aria-hidden="true"></i>';
             boton_editar_ponderacion.addEventListener("click", function(){
-                this.editar_ponderacion(datos);
+                this.editar_ponderacion(valores_esta_ponderación);
             }.bind(this));
 
         let boton_borrar_ponderacion = document.createElement("button");
@@ -225,13 +225,13 @@ class Settings {
             boton_borrar_ponderacion.className = "boton_borrar_ponderacion";
             boton_borrar_ponderacion.innerHTML = '<i class="icon fa fa-trash fa-fw" aria-hidden="true"></i>';
             boton_borrar_ponderacion.addEventListener("click", function(){
-                this.borrar_ponderacion(datos);
+                this.borrar_ponderacion(valores_esta_ponderación);
             }.bind(this));
 
         let campo_oculto_ponderacion = document.createElement("input");
-        campo_oculto_ponderacion.type = "hidden";
-        campo_oculto_ponderacion.value = JSON.stringify(datos);
-        campo_oculto_ponderacion.className = "campo_oculto_ponderacion";
+            campo_oculto_ponderacion.type = "hidden";
+            campo_oculto_ponderacion.value = JSON.stringify(valores_esta_ponderación);
+            campo_oculto_ponderacion.className = "campo_oculto_ponderacion";
 
         let contenedor_botones_ponderaciones = document.createElement("div");
             contenedor_botones_ponderaciones.className = "contenedor_botones_plantilla";
@@ -276,6 +276,7 @@ class Settings {
                 array_item_checkbox_categorias[i].checked = false;
             } 
         }
+
         this.limpiar_todos_errores();
         this.limpiar_crear_ponderacion();
     }
@@ -333,16 +334,11 @@ class Settings {
     }
 
     crear_ponderacion(){
-
-        let objPonderacion = {
-            ["ponderacion_" + document.getElementById("input_palabra_clave").value.replaceAll(" ","_")] : {
-                palabra_clave : document.getElementById("input_palabra_clave").value,
-                porcentaje : parseInt(document.getElementById("input_porcentaje_ponderacion").value),
-                modulos : []
-            }
-        };
-
-        let ponderacion = Object.values(objPonderacion)[0];
+        let ponderacion = {
+            palabra_clave : document.getElementById("input_palabra_clave").value,
+            porcentaje : parseInt(document.getElementById("input_porcentaje_ponderacion").value),
+            modulos : []
+        }
 
         for (let i = 0; i < document.getElementsByClassName("item_checkbox_modulos").length; i++) {
             if(document.getElementsByClassName("item_checkbox_modulos")[i].checked){
@@ -353,23 +349,21 @@ class Settings {
         let error_mensaje_palabra_clave = document.getElementById("error_mensaje_palabra_clave");
         let error_mensaje_modulos = document.getElementById("error_mensaje_modulos");
         let error_mensaje_ponderaciones = document.getElementById("error_mensaje_ponderaciones");
+        let arr_elemento_ponderacion_palabra_clave = [].slice.call(document.getElementsByClassName("elemento_ponderacion_palabra_clave"));
+
         if(ponderacion.palabra_clave == ""){
             error_mensaje_palabra_clave.style.display = "block";
             error_mensaje_palabra_clave.innerHTML = "⚠️ Este campo no puede quedar vacío";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
             return;
+        }else if (arr_elemento_ponderacion_palabra_clave.some(e => e.innerHTML === ponderacion.palabra_clave)) {
+            error_mensaje_palabra_clave.style.display = "block";
+            error_mensaje_palabra_clave.innerHTML = "⚠️ Esta palabra clave ya existe";
+            document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
+            return;
         }else{
-            for (let i = 0; i < document.getElementsByClassName("elemento_ponderacion_palabra_clave").length; i++) {
-                if(ponderacion.palabra_clave == document.getElementsByClassName("elemento_ponderacion_palabra_clave")[i].innerHTML){
-                    error_mensaje_palabra_clave.style.display = "block";
-                    error_mensaje_palabra_clave.innerHTML = "⚠️ Esta palabra clave ya existe";
-                    document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-                    return;
-                }else{
-                    error_mensaje_palabra_clave.style.display = "none";
-                    error_mensaje_palabra_clave.innerHTML = "";
-                }
-            }
+            error_mensaje_palabra_clave.style.display = "none";
+            error_mensaje_palabra_clave.innerHTML = "";
         }
 
         if(ponderacion.modulos.length === 0){
@@ -392,7 +386,7 @@ class Settings {
             error_mensaje_ponderaciones.innerHTML = "";
         }
 
-        this.montar_ponderacion(objPonderacion);
+        this.montar_ponderacion(ponderacion);
 
         document.getElementById("total_ponderaciones").innerHTML = (parseInt(document.getElementById("total_ponderaciones").innerHTML) + ponderacion.porcentaje) + "%";
         this.limpiar_crear_ponderacion();
