@@ -7,12 +7,20 @@
     margin-bottom: 15px;
 }
 
+#contenedor_ventana_modal_settings{
+    max-width: 700px;
+}
+
 #ventana_modal_settings li:nth-child(even){
     background-color: rgba(0, 0, 0, 0.08);
 }
 
 #ventana_modal_settings li{
+    /* padding: 5px 10px; */
+    display: flex;
     padding: 5px 10px;
+    justify-content: space-between;
+    align-items: center;
 }
 
 #ventana_modal_settings label,
@@ -55,16 +63,14 @@
     background-color: white;
     padding: 0;
     margin: 0 0 15px;
+    list-style-type: none;
 }
 
 #ventana_gestionar_plantillas > ul > li,
 #contenedor_ponderaciones_plantilla > ul > li{
-    padding: 5px 10px 5px 5px;
-    margin-left: 30px;
-}
-
-#lista_plantillas{
-    padding-left: 20px;
+    /* padding: 5px 10px 5px 5px; */
+    padding: 5px;
+    /* margin-left: 30px; */
 }
 
 #contenedor_ventana_crear_editar{
@@ -98,6 +104,7 @@
     padding: 0;
     margin: 0;
     margin-bottom: 10px;
+    list-style-type: none;
 }
 
 #contenedor_listado_modulos_ponderaciones > ul{
