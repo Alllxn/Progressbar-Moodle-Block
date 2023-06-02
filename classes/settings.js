@@ -134,6 +134,8 @@ class Settings {
             error_mensaje_ponderaciones_plantilla.style.display = "none";
             error_mensaje_ponderaciones_plantilla.innerHTML = "";
         }
+
+        // console.log(objPlantilla);
         
         this.datos_lista_plantillas.push(objPlantilla);
         document.getElementById("id_s_block_barra_progreso_json_string").value = JSON.stringify(this.datos_lista_plantillas);
@@ -144,7 +146,7 @@ class Settings {
     montar_editar_plantilla(datos){
         
         this.abrir_crear_plantilla();
-        console.log(datos);
+        // console.log(datos);
         let id_esta_plantilla = Object.keys(datos)[0];
         let valores_esta_plantilla = Object.values(datos)[0];
         
@@ -166,29 +168,38 @@ class Settings {
                 boton_editar_plantilla.id = "boton_editar_plantilla";
                 boton_editar_plantilla.innerHTML = "Editar plantilla "+valores_esta_plantilla.nombre_plantilla;
                 boton_editar_plantilla.addEventListener("click", function(){
-                    this.editar_plantilla(id_esta_plantilla);
+                    this.editar_plantilla(datos);
                 }.bind(this));
 
             document.getElementById("contenedor_boton_crear_editar_plantilla").appendChild(boton_editar_plantilla);
         }
     }
-    
+
     editar_plantilla(plantilla_editar){
-        this.limpiar_crear_plantilla();
-        // console.log(plantilla_editar);
-        // for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
-        //     if(Object.keys(this.datos_lista_plantillas[i])[0] == plantilla_editar){
-        //         console.log('lo encontré');
-        //     }            
+        let objetoBuscado = this.datos_lista_plantillas.find(elemento => elemento == plantilla_editar);
+        let input_nombre_plantilla = document.getElementById("input_nombre_plantilla");
+        // let keyObjetoBuscado = Object.keys(objetoBuscado)[0];
+        // let valueObjetoBuscado = Object.values(objetoBuscado)[0];
+
+        // Object.keys(objetoBuscado)[0] = "plantilla_"+input_nombre_plantilla.value;
+        // Object.values(objetoBuscado)[0].nombre_plantilla = input_nombre_plantilla.value;
+        
+        // let array_categorias = [];
+        // for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
+        //     if(document.getElementsByClassName("item_checkbox_categorias")[i].checked){
+        //         array_categorias.push(document.getElementsByClassName("item_checkbox_categorias")[i].value)
+        //     }
         // }
 
-        // console.log(this.datos_lista_plantillas[plantilla_editar])
-        console.log(this.datos_lista_plantillas)
-        console.log(this.datos_lista_plantillas[0])
-        // console.log(Object.values(this.datos_lista_plantillas)[0])
+        // Object.values(objetoBuscado)[0].categorias = array_categorias;
 
-
-        //[{"plantilla_plan_cabildo":{"nombre_plantilla":"plan cabildo","categorias":["Plan Cabildo"],"ponderaciones":[{"ponderacion_obligatorio":{"palabra_clave":"obligatorio","porcentaje":100,"modulos":["forum"]}}],"total_ponderaciones":100}}]
+        // Object.values(objetoBuscado)[0] = {nombre_plantilla : "hola"};
+        // console.log(Object.values(objetoBuscado)[0]);
+        // objetoBuscado = "HOla";
+        const nombreObjeto = Object.keys(objetoBuscado)[0];
+        objetoBuscado[nombreObjeto]["nombre_plantilla"] = "nuevo nombre";
+        console.log(this.datos_lista_plantillas);
+        this.limpiar_crear_plantilla();
 
     }
 
@@ -217,11 +228,17 @@ class Settings {
                 this.borrar_ponderacion(datos);
             }.bind(this));
 
+        let campo_oculto_ponderacion = document.createElement("input");
+        campo_oculto_ponderacion.type = "hidden";
+        campo_oculto_ponderacion.value = JSON.stringify(datos);
+        campo_oculto_ponderacion.className = "campo_oculto_ponderacion";
+
         let contenedor_botones_ponderaciones = document.createElement("div");
             contenedor_botones_ponderaciones.className = "contenedor_botones_plantilla";
 
         contenedor_botones_ponderaciones.appendChild(boton_editar_ponderacion);
         contenedor_botones_ponderaciones.appendChild(boton_borrar_ponderacion);
+        contenedor_botones_ponderaciones.appendChild(campo_oculto_ponderacion);
         li_elemento.appendChild(contenedor_botones_ponderaciones);
 
         document.getElementById("lista_ponderaciones").appendChild(li_elemento);
@@ -230,8 +247,6 @@ class Settings {
             document.getElementById("item_lista_vacia_ponderaciones").remove();
         }
     }
-
-
 
     limpiar_todos_errores(){
         for (let i = 0; i < document.getElementsByClassName("error_mensaje").length; i++) {
