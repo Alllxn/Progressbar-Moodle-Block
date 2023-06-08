@@ -124,7 +124,10 @@ $html = '
                     <p class="error_mensaje" id="error_mensaje_modulos"></p>
                 </div>
                 <p class="error_mensaje" id="error_mensaje_modulos"></p>
-                <button id="boton_crear_ponderacion" type="button">Crear ponderación</button>
+                
+                <div id="contenedor_boton_crear_editar_ponderacion">
+                    <button id="boton_crear_ponderacion" type="button">Crear ponderación</button>
+                </div>
             </div>
             <div id="contenedor_boton_crear_editar_plantilla">
                 <button id="boton_crear_plantilla" type="button">Crear plantilla</button>

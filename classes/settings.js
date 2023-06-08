@@ -92,6 +92,14 @@ class Settings {
             plantilla.ponderaciones.push(JSON.parse(document.getElementsByClassName("campo_oculto_ponderacion")[i].value))
         }
 
+        if(this.validar_plantilla(plantilla)){
+            this.datos_lista_plantillas.push(plantilla);
+            this.actualizar_lista_plantillas();
+            this.limpiar_crear_plantilla();
+        }
+    }
+
+    validar_plantilla(plantilla){
         let error_mensaje_nombre_plantilla = document.getElementById("error_mensaje_nombre_plantilla");
         let error_mensaje_categorias = document.getElementById("error_mensaje_categorias");
         let error_mensaje_ponderaciones_plantilla = document.getElementById("error_mensaje_ponderaciones_plantilla");
@@ -100,12 +108,12 @@ class Settings {
             error_mensaje_nombre_plantilla.style.display = "block";
             error_mensaje_nombre_plantilla.innerHTML = "⚠️ Este campo no puede quedar vacío";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-            return;
+            return false;
         }else if (this.datos_lista_plantillas.some(e => e.nombre_plantilla === plantilla.nombre_plantilla)) {
             error_mensaje_nombre_plantilla.style.display = "block";
             error_mensaje_nombre_plantilla.innerHTML = "⚠️ Ya existe una plantilla con este nombre";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-            return;
+            return false;
         }else{
             error_mensaje_nombre_plantilla.style.display = "none";
             error_mensaje_nombre_plantilla.innerHTML = "";
@@ -115,7 +123,7 @@ class Settings {
             error_mensaje_categorias.style.display = "block";
             error_mensaje_categorias.innerHTML = "⚠️ Debe seleccionar al menos una opción";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-            return;
+            return false;
         }else{
             error_mensaje_categorias.style.display = "none";
             error_mensaje_categorias.innerHTML = "";
@@ -125,15 +133,13 @@ class Settings {
             error_mensaje_ponderaciones_plantilla.style.display = "block";
             error_mensaje_ponderaciones_plantilla.innerHTML = "⚠️ Debe determinar los porcentajes de las ponderaciones para que sea 100%";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-            return;
+            return false;
         }else{
             error_mensaje_ponderaciones_plantilla.style.display = "none";
             error_mensaje_ponderaciones_plantilla.innerHTML = "";
         }
-        
-        this.datos_lista_plantillas.push(plantilla);
-        this.actualizar_lista_plantillas();
-        this.limpiar_crear_plantilla();
+
+        return true;
     }
 
     montar_editar_plantilla(valores_esta_plantilla){
@@ -142,6 +148,7 @@ class Settings {
         
         document.getElementById("titulo_crear_editar_plantilla").innerHTML = "Editar plantilla "+valores_esta_plantilla.nombre_plantilla;
         document.getElementById("input_nombre_plantilla").value = valores_esta_plantilla.nombre_plantilla;
+        let suma_porcentajes_ponderaciones = 0;
 
         for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
             document.getElementsByClassName("item_checkbox_categorias")[i].checked = valores_esta_plantilla.categorias.includes(document.getElementsByClassName("item_checkbox_categorias")[i].value);
@@ -149,7 +156,10 @@ class Settings {
 
         for (let i = 0; i < valores_esta_plantilla.ponderaciones.length; i++) {            
            this.montar_ponderacion(valores_esta_plantilla.ponderaciones[i]);
+           suma_porcentajes_ponderaciones += valores_esta_plantilla.ponderaciones[i].porcentaje;
         }
+
+        document.getElementById("total_ponderaciones").innerHTML = suma_porcentajes_ponderaciones + "%";
 
         if(document.getElementById("boton_crear_plantilla")){
             document.getElementById("boton_crear_plantilla").remove();
@@ -217,15 +227,16 @@ class Settings {
             boton_editar_ponderacion.className = "boton_editar_ponderacion";
             boton_editar_ponderacion.innerHTML = '<i class="icon fa fa-pencil fa-fw" aria-hidden="true"></i>';
             boton_editar_ponderacion.addEventListener("click", function(){
-                this.editar_ponderacion(valores_esta_ponderación);
+                this.montar_editar_ponderacion(valores_esta_ponderación);
             }.bind(this));
 
         let boton_borrar_ponderacion = document.createElement("button");
             boton_borrar_ponderacion.type = "button";
             boton_borrar_ponderacion.className = "boton_borrar_ponderacion";
             boton_borrar_ponderacion.innerHTML = '<i class="icon fa fa-trash fa-fw" aria-hidden="true"></i>';
-            boton_borrar_ponderacion.addEventListener("click", function(){
-                this.borrar_ponderacion(valores_esta_ponderación);
+            boton_borrar_ponderacion.addEventListener("click", function(event){
+                // this.borrar_ponderacion(valores_esta_ponderación);
+                this.borrar_ponderacion(event, valores_esta_ponderación);
             }.bind(this));
 
         let campo_oculto_ponderacion = document.createElement("input");
@@ -301,35 +312,50 @@ class Settings {
         }
     }
 
+    montar_editar_ponderacion(ponderacion){
+        // console.log(ponderacion);
+        this.abrir_crear_ponderacion();
+
+        let input_palabra_clave = document.getElementById("input_palabra_clave");
+        let input_porcentaje_ponderacion = document.getElementById("input_porcentaje_ponderacion");
+        let array_item_checkbox_modulos = document.getElementsByClassName("item_checkbox_modulos");
+
+        input_palabra_clave.value = ponderacion.palabra_clave;
+        input_porcentaje_ponderacion.value = ponderacion.porcentaje;
+        for (let i = 0; i < array_item_checkbox_modulos.length; i++) {
+            array_item_checkbox_modulos[i].checked = ponderacion.modulos.includes(array_item_checkbox_modulos[i].value);
+        }
+
+        if(document.getElementById("boton_crear_ponderacion")){
+            document.getElementById("boton_crear_ponderacion").remove();
+            let boton_editar_ponderacion = document.createElement("button");
+                boton_editar_ponderacion.type = "button";
+                boton_editar_ponderacion.id = "boton_editar_ponderacion";
+                boton_editar_ponderacion.innerHTML = 'Editar ponderación "'+ponderacion.palabra_clave+'"';
+                boton_editar_ponderacion.addEventListener("click", function(){
+                    this.editar_ponderacion(ponderacion);
+                }.bind(this));
+
+            document.getElementById("contenedor_boton_crear_editar_ponderacion").appendChild(boton_editar_ponderacion);
+        }
+    }
+
     editar_ponderacion(ponderacion){
         console.log(ponderacion);
     }
 
-    borrar_ponderacion(ponderacion){
-        console.log(ponderacion);
-    }
+    borrar_ponderacion(event, ponderacion){
+        let elemento_a_borrar = event.currentTarget.parentNode.parentNode;
 
-    comprobar_cambios_categorias(e){
-        if(e.target.id == "todas_categorias"){
-            for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
-                if(document.getElementsByClassName("item_checkbox_categorias")[i].id != "todas_categorias"){
-                    document.getElementsByClassName("item_checkbox_categorias")[i].checked = false;
-                }
+        if (confirm('¿Está seguro de querer borrar la ponderación "'+ponderacion.palabra_clave+'"?')) {
+            elemento_a_borrar.remove();
+            let arr_elementos_ponderaciones= [].slice.call(document.getElementsByClassName("elemento_ponderacion"));
+            if(arr_elementos_ponderaciones.length < 1){
+                document.getElementById("lista_ponderaciones").innerHTML = '<li id="item_lista_vacia_ponderaciones">Ninguna</li>';
             }
-        }else{
-            document.getElementById("todas_categorias").checked = false;
-        }
-    }
-    
-    comprobar_cambios_modulos(e){
-        if(e.target.id == "todos_modulos"){
-            for (let i = 0; i < document.getElementsByClassName("item_checkbox_modulos").length; i++) {
-                if(document.getElementsByClassName("item_checkbox_modulos")[i].id != "todos_modulos"){
-                    document.getElementsByClassName("item_checkbox_modulos")[i].checked = false;
-                }
-            }
-        }else{
-            document.getElementById("todos_modulos").checked = false;
+            
+            document.getElementById("total_ponderaciones").innerHTML = (parseInt(document.getElementById("total_ponderaciones").innerHTML) - ponderacion.porcentaje) + "%";
+            this.limpiar_crear_ponderacion();
         }
     }
 
@@ -393,11 +419,49 @@ class Settings {
     }
 
     abrir_crear_ponderacion(){
+        this.limpiar_crear_ponderacion();
         let contenedor_crear_editar_ponderaciones = document.getElementById("contenedor_crear_editar_ponderaciones");
-        let boton_aniadir_ponderacion = document.getElementById("boton_aniadir_ponderacion");
+        // let boton_aniadir_ponderacion = document.getElementById("boton_aniadir_ponderacion");
 
         contenedor_crear_editar_ponderaciones.style.display = "flex";
-        boton_aniadir_ponderacion.style.display = "none";
+        // boton_aniadir_ponderacion.style.display = "none";
+        
+        if(document.getElementById("boton_editar_ponderacion")){
+            document.getElementById("boton_editar_ponderacion").remove();
+            let boton_crear_ponderacion = document.createElement("button");
+                boton_crear_ponderacion.type = "button";
+                boton_crear_ponderacion.id = "boton_crear_ponderacion";
+                boton_crear_ponderacion.innerHTML = 'Crear ponderación';
+                boton_crear_ponderacion.addEventListener("click", function(){
+                    this.crear_ponderacion();
+                }.bind(this));
+
+            document.getElementById("contenedor_boton_crear_editar_ponderacion").appendChild(boton_crear_ponderacion);
+        }
+    }
+    
+    comprobar_cambios_categorias(e){
+        if(e.target.id == "todas_categorias"){
+            for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
+                if(document.getElementsByClassName("item_checkbox_categorias")[i].id != "todas_categorias"){
+                    document.getElementsByClassName("item_checkbox_categorias")[i].checked = false;
+                }
+            }
+        }else{
+            document.getElementById("todas_categorias").checked = false;
+        }
+    }
+
+    comprobar_cambios_modulos(e){
+        if(e.target.id == "todos_modulos"){
+            for (let i = 0; i < document.getElementsByClassName("item_checkbox_modulos").length; i++) {
+                if(document.getElementsByClassName("item_checkbox_modulos")[i].id != "todos_modulos"){
+                    document.getElementsByClassName("item_checkbox_modulos")[i].checked = false;
+                }
+            }
+        }else{
+            document.getElementById("todos_modulos").checked = false;
+        }
     }
 
     inicializar_settings(){
