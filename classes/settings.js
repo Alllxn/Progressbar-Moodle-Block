@@ -4,7 +4,6 @@ class Settings {
     actualizar_lista_plantillas(){
         document.getElementById("lista_plantillas").innerHTML = "";
 
-
         for (let i = 0; i < this.datos_lista_plantillas.length; i++) {
             let value_esta_plantilla = this.datos_lista_plantillas[i];
             
@@ -40,7 +39,6 @@ class Settings {
             li_elemento.appendChild(contenedor_botones_plantilla);
 
             document.getElementById("lista_plantillas").appendChild(li_elemento);
-
         }
         
         if(this.datos_lista_plantillas.length == 0){
@@ -52,6 +50,7 @@ class Settings {
 
     abrir_crear_plantilla(){
         this.limpiar_crear_plantilla();
+        document.getElementById("titulo_crear_editar_plantilla").innerHTML = "Crear nueva plantilla";
 
         let ventana_crear = document.getElementById("ventana_crear");
         ventana_crear.style.display = "flex";
@@ -73,8 +72,6 @@ class Settings {
     }
     
     crear_plantilla(){
-        document.getElementById("titulo_crear_editar_plantilla").innerHTML = "Crear nueva plantilla";
-
         let plantilla = {
             nombre_plantilla: document.getElementById("input_nombre_plantilla").value,
             categorias : [],
@@ -99,7 +96,7 @@ class Settings {
         }
     }
 
-    validar_plantilla(plantilla){
+    validar_plantilla(plantilla, tipo_validacion = ""){
         let error_mensaje_nombre_plantilla = document.getElementById("error_mensaje_nombre_plantilla");
         let error_mensaje_categorias = document.getElementById("error_mensaje_categorias");
         let error_mensaje_ponderaciones_plantilla = document.getElementById("error_mensaje_ponderaciones_plantilla");
@@ -109,7 +106,7 @@ class Settings {
             error_mensaje_nombre_plantilla.innerHTML = "⚠️ Este campo no puede quedar vacío";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
             return false;
-        }else if (this.datos_lista_plantillas.some(e => e.nombre_plantilla === plantilla.nombre_plantilla)) {
+        }else if (tipo_validacion !== 'editar' && this.datos_lista_plantillas.some(e => e.nombre_plantilla === plantilla.nombre_plantilla)) {
             error_mensaje_nombre_plantilla.style.display = "block";
             error_mensaje_nombre_plantilla.innerHTML = "⚠️ Ya existe una plantilla con este nombre";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
@@ -139,6 +136,8 @@ class Settings {
             error_mensaje_ponderaciones_plantilla.innerHTML = "";
         }
 
+        console.log(plantilla);
+
         return true;
     }
 
@@ -155,8 +154,8 @@ class Settings {
         }
 
         for (let i = 0; i < valores_esta_plantilla.ponderaciones.length; i++) {            
-           this.montar_ponderacion(valores_esta_plantilla.ponderaciones[i]);
-           suma_porcentajes_ponderaciones += valores_esta_plantilla.ponderaciones[i].porcentaje;
+            this.montar_ponderacion(valores_esta_plantilla.ponderaciones[i]);
+            suma_porcentajes_ponderaciones += valores_esta_plantilla.ponderaciones[i].porcentaje;
         }
 
         document.getElementById("total_ponderaciones").innerHTML = suma_porcentajes_ponderaciones + "%";
@@ -178,6 +177,7 @@ class Settings {
     editar_plantilla(plantilla_editar){
         let objetoBuscado = this.datos_lista_plantillas.find(elemento => elemento == plantilla_editar);
         let input_nombre_plantilla = document.getElementById("input_nombre_plantilla");
+        let total_ponderaciones = document.getElementById("total_ponderaciones");
         
         let array_categorias = [];
         for (let i = 0; i < document.getElementsByClassName("item_checkbox_categorias").length; i++) {
@@ -191,12 +191,22 @@ class Settings {
             array_ponderaciones.push(JSON.parse(document.getElementsByClassName("campo_oculto_ponderacion")[i].value))
         }
 
-        objetoBuscado.nombre_plantilla = input_nombre_plantilla.value;
-        objetoBuscado.categorias = array_categorias;
-        objetoBuscado.ponderaciones = array_categorias;
+        let objectoPonderacion = {
+            nombre_plantilla : input_nombre_plantilla.value,
+            categorias : array_categorias,
+            ponderaciones : array_ponderaciones,
+            total_ponderaciones : parseInt(total_ponderaciones.innerHTML)
+        };
         
-        this.actualizar_lista_plantillas();
-        this.limpiar_crear_plantilla();
+        if(this.validar_plantilla(objectoPonderacion, 'editar')){
+            objetoBuscado.nombre_plantilla = objectoPonderacion.nombre_plantilla;
+            objetoBuscado.categorias = objectoPonderacion.categorias;
+            objetoBuscado.ponderaciones = objectoPonderacion.ponderaciones;
+            objetoBuscado.total_ponderaciones = objectoPonderacion.total_ponderaciones;
+    
+            this.actualizar_lista_plantillas();
+            this.limpiar_crear_plantilla();
+        }
 
     }
 
@@ -226,8 +236,8 @@ class Settings {
             boton_editar_ponderacion.type = "button";
             boton_editar_ponderacion.className = "boton_editar_ponderacion";
             boton_editar_ponderacion.innerHTML = '<i class="icon fa fa-pencil fa-fw" aria-hidden="true"></i>';
-            boton_editar_ponderacion.addEventListener("click", function(){
-                this.montar_editar_ponderacion(valores_esta_ponderación);
+            boton_editar_ponderacion.addEventListener("click", function(event){
+                this.montar_editar_ponderacion(event, valores_esta_ponderación);
             }.bind(this));
 
         let boton_borrar_ponderacion = document.createElement("button");
@@ -312,9 +322,11 @@ class Settings {
         }
     }
 
-    montar_editar_ponderacion(ponderacion){
-        // console.log(ponderacion);
+    montar_editar_ponderacion(event, ponderacion){
         this.abrir_crear_ponderacion();
+        let evento_objetivo = event.currentTarget;
+        let titulo_crear_editar_ponderacion = document.getElementById("titulo_crear_editar_ponderacion");
+        titulo_crear_editar_ponderacion.innerHTML = 'Editar ponderación "'+ponderacion.palabra_clave+'"';
 
         let input_palabra_clave = document.getElementById("input_palabra_clave");
         let input_porcentaje_ponderacion = document.getElementById("input_porcentaje_ponderacion");
@@ -333,15 +345,38 @@ class Settings {
                 boton_editar_ponderacion.id = "boton_editar_ponderacion";
                 boton_editar_ponderacion.innerHTML = 'Editar ponderación "'+ponderacion.palabra_clave+'"';
                 boton_editar_ponderacion.addEventListener("click", function(){
-                    this.editar_ponderacion(ponderacion);
+                    this.editar_ponderacion(evento_objetivo, ponderacion);
                 }.bind(this));
 
             document.getElementById("contenedor_boton_crear_editar_ponderacion").appendChild(boton_editar_ponderacion);
         }
     }
 
-    editar_ponderacion(ponderacion){
-        console.log(ponderacion);
+    editar_ponderacion(evento_objetivo, ponderacion){
+        // let objetivo = evento_objetivo.parentNode.getElementsByClassName("campo_oculto_ponderacion")[0];
+        let objetivo = evento_objetivo.parentNode.parentNode;
+        // let porcentaje = objetivo.getElementsByClassName("elemento_ponderacion_porcentaje")[0];
+        // let palabra_clave = objetivo.getElementsByClassName("elemento_ponderacion_palabra_clave")[0];
+
+        let array_modulos = [];
+
+        for (let i = 0; i < document.getElementsByClassName("item_checkbox_modulos").length; i++) {
+            if(document.getElementsByClassName("item_checkbox_modulos")[i].checked){
+                array_modulos.push(document.getElementsByClassName("item_checkbox_modulos")[i].value);
+            }
+        }
+
+        let nuevoObjeto = {
+            palabra_clave : document.getElementById("input_palabra_clave").value,
+            porcentaje : parseInt(document.getElementById("input_porcentaje_ponderacion").value),
+            modulos : array_modulos
+        };
+
+        if(this.validar_form_ponderacion(nuevoObjeto)){
+            objetivo.getElementsByClassName("elemento_ponderacion_porcentaje")[0].innerHTML = '['+nuevoObjeto.porcentaje+'%]';
+            objetivo.getElementsByClassName("elemento_ponderacion_palabra_clave")[0].innerHTML = nuevoObjeto.palabra_clave;
+            objetivo.getElementsByClassName("campo_oculto_ponderacion")[0].value = JSON.stringify(nuevoObjeto);
+        }
     }
 
     borrar_ponderacion(event, ponderacion){
@@ -372,6 +407,15 @@ class Settings {
             }
         }
 
+        if(this.validar_form_ponderacion(ponderacion)){
+            this.montar_ponderacion(ponderacion);
+    
+            document.getElementById("total_ponderaciones").innerHTML = (parseInt(document.getElementById("total_ponderaciones").innerHTML) + ponderacion.porcentaje) + "%";
+            this.limpiar_crear_ponderacion();
+        }
+    }
+
+    validar_form_ponderacion(ponderacion){
         let error_mensaje_palabra_clave = document.getElementById("error_mensaje_palabra_clave");
         let error_mensaje_modulos = document.getElementById("error_mensaje_modulos");
         let error_mensaje_ponderaciones = document.getElementById("error_mensaje_ponderaciones");
@@ -381,12 +425,12 @@ class Settings {
             error_mensaje_palabra_clave.style.display = "block";
             error_mensaje_palabra_clave.innerHTML = "⚠️ Este campo no puede quedar vacío";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-            return;
+            return false;
         }else if (arr_elemento_ponderacion_palabra_clave.some(e => e.innerHTML === ponderacion.palabra_clave)) {
             error_mensaje_palabra_clave.style.display = "block";
             error_mensaje_palabra_clave.innerHTML = "⚠️ Esta palabra clave ya existe";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-            return;
+            return false;
         }else{
             error_mensaje_palabra_clave.style.display = "none";
             error_mensaje_palabra_clave.innerHTML = "";
@@ -395,8 +439,8 @@ class Settings {
         if(ponderacion.modulos.length === 0){
             error_mensaje_modulos.style.display = "block";
             error_mensaje_modulos.innerHTML = "⚠️ Debe seleccionar al menos un módulo";
-            document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-            return;
+            document.location.href = "#id_s_block_barra_progreso_titulo_bloque"; 
+            return false;
         }else{
             error_mensaje_modulos.style.display = "none";
             error_mensaje_modulos.innerHTML = "";
@@ -406,24 +450,23 @@ class Settings {
             error_mensaje_ponderaciones.style.display = "block";
             error_mensaje_ponderaciones.innerHTML = "⚠️ La suma de todas las ponderaciones no puede ser superior al 100%";
             document.location.href = "#id_s_block_barra_progreso_titulo_bloque";
-            return;
+            return false;
         }else{
             error_mensaje_ponderaciones.style.display = "none";
             error_mensaje_ponderaciones.innerHTML = "";
         }
 
-        this.montar_ponderacion(ponderacion);
-
-        document.getElementById("total_ponderaciones").innerHTML = (parseInt(document.getElementById("total_ponderaciones").innerHTML) + ponderacion.porcentaje) + "%";
-        this.limpiar_crear_ponderacion();
+        return true;
     }
 
     abrir_crear_ponderacion(){
         this.limpiar_crear_ponderacion();
         let contenedor_crear_editar_ponderaciones = document.getElementById("contenedor_crear_editar_ponderaciones");
+        let titulo_crear_editar_ponderacion = document.getElementById("titulo_crear_editar_ponderacion");
         // let boton_aniadir_ponderacion = document.getElementById("boton_aniadir_ponderacion");
 
         contenedor_crear_editar_ponderaciones.style.display = "flex";
+        titulo_crear_editar_ponderacion.innerHTML = "Crear ponderación";
         // boton_aniadir_ponderacion.style.display = "none";
         
         if(document.getElementById("boton_editar_ponderacion")){
