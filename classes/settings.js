@@ -345,12 +345,41 @@ class Settings {
 
     /**
      * 
+     * Abre y monta el formulario vacio para empezar a introducir los datos de una nueva ponderación
+     * @returns {void}
+     */
+    abrir_crear_ponderacion(){
+        this.limpiar_crear_ponderacion();
+        document.getElementById("contenedor_boton_crear_editar_plantilla").getElementsByTagName("BUTTON")[0].disabled = true;
+        let contenedor_crear_editar_ponderaciones = document.getElementById("contenedor_crear_editar_ponderaciones");
+        let titulo_crear_editar_ponderacion = document.getElementById("titulo_crear_editar_ponderacion");
+
+        contenedor_crear_editar_ponderaciones.style.display = "flex";
+        titulo_crear_editar_ponderacion.innerHTML = "Crear ponderación";
+        
+        if(document.getElementById("boton_editar_ponderacion")){
+            document.getElementById("boton_editar_ponderacion").remove();
+            let boton_crear_ponderacion = document.createElement("button");
+                boton_crear_ponderacion.type = "button";
+                boton_crear_ponderacion.id = "boton_crear_ponderacion";
+                boton_crear_ponderacion.innerHTML = 'Crear ponderación';
+                boton_crear_ponderacion.addEventListener("click", function(){
+                    this.crear_ponderacion();
+                }.bind(this));
+
+            document.getElementById("contenedor_boton_crear_editar_ponderacion").appendChild(boton_crear_ponderacion);
+        }
+    }
+
+    /**
+     * 
      * Monta el formulario con los datos para editar una ponderación 
      * @param {Object} event objeto evento
      * @returns {void} 
      */
     montar_editar_ponderacion(event){
         this.abrir_crear_ponderacion();
+        document.getElementById("contenedor_boton_crear_editar_plantilla").getElementsByTagName("BUTTON")[0].disabled = true;
         let evento_objetivo = event.currentTarget;
         let ponderacion = JSON.parse(event.currentTarget.parentNode.getElementsByClassName("campo_oculto_ponderacion")[0].value);
         let titulo_crear_editar_ponderacion = document.getElementById("titulo_crear_editar_ponderacion");
@@ -406,6 +435,7 @@ class Settings {
             objetivo.getElementsByClassName("elemento_ponderacion_porcentaje")[0].innerHTML = '['+nuevoObjeto.porcentaje+'%]';
             objetivo.getElementsByClassName("elemento_ponderacion_palabra_clave")[0].innerHTML = nuevoObjeto.palabra_clave;
             objetivo.getElementsByClassName("campo_oculto_ponderacion")[0].value = JSON.stringify(nuevoObjeto);
+        document.getElementById("contenedor_boton_crear_editar_plantilla").getElementsByTagName("BUTTON")[0].disabled = false;
             this.limpiar_crear_ponderacion();
         }
     }
@@ -454,6 +484,7 @@ class Settings {
             this.montar_ponderacion(ponderacion);
     
             document.getElementById("total_ponderaciones").innerHTML = (parseInt(document.getElementById("total_ponderaciones").innerHTML) + ponderacion.porcentaje) + "%";
+            document.getElementById("contenedor_boton_crear_editar_plantilla").getElementsByTagName("BUTTON")[0].disabled = false;
             this.limpiar_crear_ponderacion();
         }
     }
@@ -580,33 +611,6 @@ class Settings {
         }
 
         return true;
-    }
-
-    /**
-     * 
-     * Abre y monta el formulario vacio para empezar a introducir los datos de una nueva ponderación
-     * @returns {void}
-     */
-    abrir_crear_ponderacion(){
-        this.limpiar_crear_ponderacion();
-        let contenedor_crear_editar_ponderaciones = document.getElementById("contenedor_crear_editar_ponderaciones");
-        let titulo_crear_editar_ponderacion = document.getElementById("titulo_crear_editar_ponderacion");
-
-        contenedor_crear_editar_ponderaciones.style.display = "flex";
-        titulo_crear_editar_ponderacion.innerHTML = "Crear ponderación";
-        
-        if(document.getElementById("boton_editar_ponderacion")){
-            document.getElementById("boton_editar_ponderacion").remove();
-            let boton_crear_ponderacion = document.createElement("button");
-                boton_crear_ponderacion.type = "button";
-                boton_crear_ponderacion.id = "boton_crear_ponderacion";
-                boton_crear_ponderacion.innerHTML = 'Crear ponderación';
-                boton_crear_ponderacion.addEventListener("click", function(){
-                    this.crear_ponderacion();
-                }.bind(this));
-
-            document.getElementById("contenedor_boton_crear_editar_ponderacion").appendChild(boton_crear_ponderacion);
-        }
     }
 
     /**

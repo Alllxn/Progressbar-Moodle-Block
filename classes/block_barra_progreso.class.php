@@ -4,6 +4,9 @@
 
 // // require_once($CFG->wwwroot.'blocks/barra_progreso/block_barra_progreso.php');
 // require_once('../block_barra_progreso.php');
+
+// use customcertelement_bgimage\element;
+
 require_once($CFG->dirroot . "/blocks/barra_progreso/block_barra_progreso.php");
 
 
@@ -74,13 +77,11 @@ class Barra_progreso extends block_barra_progreso{
         $categorias = $DB->get_recordset_sql($categorias_sql);
 
         $array_categorias = [];
-        // $array_categorias = [];
 
         foreach ($categorias as $categoria) {
             $array_categorias[$categoria->id] = $categoria->name;
         }
 
-        // var_dump($array_categorias);
         return $array_categorias;
     }
 
@@ -206,45 +207,8 @@ class Barra_progreso extends block_barra_progreso{
     
     private function determinar_icono_modulo($tipo_modulo){
         global $OUTPUT;
-        // $output = $PAGE->get_renderer('block_barra_progreso');
         $link_modulo = $OUTPUT->image_url('icon', 'mod_'.$tipo_modulo)->out();
         return $link_modulo;
     }    
 
-    public function determinar_plantilla_a_usar(){
-        global $CFG;
-
-        // var_dump(get_config('block_barra_progreso'));
-        // $ah = new stdClass;
-        // $ah->id = 47;
-        // var_dump(block_instance('barra_progreso', $ah));
-        // $instancia = 47;
-        // $blockinstance = block_instance('barra_progreso', context_block::instance(47));
-        // $config = $blockinstance->get_config();
-        // var_dump($blockinstance)
-        
-        $plantillas_existentes = $this->get_plantillas();
-        $plantilla_a_usar = 0;
-        // var_dump($plantillas_existentes);
-        // $this->get_config_block();
-        var_dump($this->get_instance_block());
-        return $plantilla_a_usar;
-    }
-
-    public function get_plantillas(){
-        global $COURSE; 
-        $datos_categoria = core_course_category::get($COURSE->category);        
-        $todas_plantillas = json_decode(get_config('block_barra_progreso', 'json_string'));
-        $datos_plantilla_a_usar = [];
-        if(!empty($todas_plantillas)){
-            foreach ($todas_plantillas as $key => $value) {
-                if(in_array($datos_categoria->name, $value->categorias) || in_array("Todas las categorías", $value->categorias) || get_config('block_barra_progreso', 'plantilla') == $key){
-                    array_push($datos_plantilla_a_usar, $value);
-                    // var_dump($key);
-                }
-            }
-        }
-            
-        return $datos_plantilla_a_usar;
-    }
 }

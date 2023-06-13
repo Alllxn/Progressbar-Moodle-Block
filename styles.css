@@ -82,6 +82,10 @@
     display: none;
     flex-direction: column;
     margin-top: 20px;
+    
+    background-color: rgba(0, 0, 0, 0.05);
+    /* flex-direction: column; */
+    padding: 10px;
 }
 
 #contenedor_nombre_plantilla,
@@ -118,7 +122,7 @@
 
 #contenedor_crear_editar_ponderaciones{
     display: none;
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.1);
     flex-direction: column;
     padding: 10px;
     margin-bottom: 15px;
@@ -130,4 +134,13 @@
 
 #admin-json_string{
     display: none;
+}
+
+#contenedor_ventana_modal_settings button[disabled]{
+    background-color: gray;
+    cursor: not-allowed;
+}
+
+.imagenes_estado {
+    width: 25px;
 }

@@ -1,19 +1,9 @@
+/**
+ * 
+ * Monta la personalización de los modulos segun la plantilla
+ */
 function comprobar_visualizacion_elementos(){
-    var elementos_personalizar = document.getElementById("elementos_personalizar");
-    var id_config_personalizar_barra = document.getElementById("id_config_personalizar_barra");
-
-    // (id_config_personalizar_barra.value == 1) ? elementos_personalizar.style.display = "block" : elementos_personalizar.style.display = "none";
-    if(id_config_personalizar_barra.value == 1){
-        elementos_personalizar.style.display = "block";
-        for (let i = 0; i < document.getElementsByClassName('input_config_instancia_bloque').length; i++) {
-            document.getElementsByClassName('input_config_instancia_bloque')[i].getElementsByClassName("custom-select")[0].disabled = false;   
-        }
-    }else{
-        elementos_personalizar.style.display = "none";
-        for (let i = 0; i < document.getElementsByClassName('input_config_instancia_bloque').length; i++) {
-            document.getElementsByClassName('input_config_instancia_bloque')[i].getElementsByClassName("custom-select")[0].disabled = true;   
-        }
-    }
+    
 }
 
 function comprobar_tipo_imagen_modulo(event){
