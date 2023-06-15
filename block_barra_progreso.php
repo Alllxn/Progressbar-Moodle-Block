@@ -41,23 +41,40 @@ class block_barra_progreso extends block_base {
     }
 
     public function contenido_principal(){
+        // $contenido = '<div id="contenedor_principal_barra_progreso">';
+        // $contenido .= '<div id="contenedor_barra">
+        //     <div id="barra"></div>
+        //     <div id="info_barra">
+        //         <span>% Completado</span>
+        //     </div>
+        // </div>';
+        // $contenido .= '<div id="contenedor_detalles_barra_progreso">
+        //     <button type="button">
+        //         <span>Mostrar más detalles</span>
+        //         <span><i class="icon fa fa-angle-down fa-fw " aria-hidden="true"></i></span>
+        //     </button>
+        //     <div id="detalles_barra_progreso">
+        //     </div>
+        // </div>';
+        // $contenido .= '</div>';
+        $plantilla_a_usar = $this->determinar_plantilla_usar();
+        
         $contenido = '<div id="contenedor_principal_barra_progreso">';
-        $contenido .= '<div id="contenedor_barra">
-            <div id="barra"></div>
-            <div id="info_barra">
-                <span>% Completado</span>
-            </div>
-        </div>';
-        $contenido .= '<div id="contenedor_detalles_barra_progreso">
-            <button type="button">
-                <span>Mostrar más detalles</span>
-                <span><i class="icon fa fa-angle-down fa-fw " aria-hidden="true"></i></span>
-            </button>
-            <div id="detalles_barra_progreso">
-            </div>
-        </div>';
+
+        if( is_null($plantilla_a_usar) || ( isset($this->config) && $this->config->personalizar_barra == 0 && $plantilla_a_usar === 0 ) ){
+            $contenido .= '<p>Es necesario ajustar los módulos que se quieren incluir en la barra de progreso</p>';
+        }else{
+            $contenido .= '<div id="contenedor_barra">
+                <div id="barra"></div>
+                <div id="info_barra">
+                    <span>% Completado</span>
+                    '.$this->lista_modulos_por_plantilla().'
+                </div>
+            </div>';
+        }
+
         $contenido .= '</div>';
-        var_dump($this->determinar_plantilla_usar());
+
         return $contenido;
     }
 
@@ -100,7 +117,7 @@ class block_barra_progreso extends block_base {
     public function determinar_plantilla_usar(){
         if(isset($this->config)){
             if($this->config->elegir_plantilla < 1){
-                return null;
+                return 0;
             }else{
                 return $this->obtener_plantillas_este_curso()[$this->config->elegir_plantilla-1];
             }
@@ -146,4 +163,114 @@ class block_barra_progreso extends block_base {
         }
         return $plantillas_select;
     }
+
+
+
+
+
+
+    private function sacar_nombre_modulo($id_modulo, $tipo_modulo){
+        global $DB;
+
+        $sql = "SELECT name FROM mood_$tipo_modulo WHERE id = ?";
+        $fila = $DB->get_record_sql($sql, [$id_modulo]);
+        $nombre_modulo = ($fila->name) ? $fila->name : "no name | " . $tipo_modulo;
+
+        return $nombre_modulo;
+    }
+
+    
+    public function sacar_modulos($id_curso){
+        global $DB;    
+
+        $secciones_sql = '
+            SELECT name, id
+            FROM {course_sections} 
+            WHERE {course_sections}.course = ?
+        ';
+        $secciones = $DB->get_recordset_sql($secciones_sql, [$id_curso]);
+        
+        $modulos_sql = '
+            SELECT cm.id as identificacion, mm.name as tipo_modulo, cm.instance as instancia
+            FROM {course_modules} cm
+            INNER JOIN {modules} mm
+            ON cm.module = mm.id
+            WHERE cm.section = ?
+        ';
+        
+        $contador_seccion = 0;
+        $secciones_modulos_curso = new stdClass;
+
+        foreach ($secciones as $seccion) {            
+            $obj_secciones = new stdClass;
+            $obj_secciones->nombre = ($seccion->name == "") ? "Tema $contador_seccion" : $seccion->name;
+            
+            $array_modulos = [];
+            $modulos = $DB->get_recordset_sql($modulos_sql, [$seccion->id]);
+            foreach ($modulos as $modulo) {
+                $obj_modulos = new stdClass;
+                $obj_modulos->id = $modulo->identificacion;
+                $obj_modulos->nombre = $this->sacar_nombre_modulo($modulo->instancia, $modulo->tipo_modulo);
+                $obj_modulos->tipo_modulo = $modulo->tipo_modulo;
+                array_push($array_modulos, $obj_modulos);
+            }
+
+            $obj_secciones->modulos = $array_modulos;
+
+            $secciones_modulos_curso->{$seccion->id} = $obj_secciones;
+
+            $contador_seccion++;
+        }
+
+        $json = json_encode($secciones_modulos_curso);
+        return $json;
+    }
+
+    public function lista_modulos_por_plantilla(){
+        global $COURSE;
+        $plantilla_a_usar = $this->determinar_plantilla_usar();
+        $modulos_curso = json_decode($this->sacar_modulos($COURSE->id));
+        $array_modulos_plantilla = [];
+
+        // foreach ($modulos_curso as $seccion) {
+        //     foreach ($seccion->modulos as $modulo) {
+        //         foreach ($plantilla_a_usar->ponderaciones as $ponderacion) {
+        //             if(strpos(strtoupper($modulo->nombre), strtoupper($ponderacion->palabra_clave)) !== false){
+        //                 $objeto_elemento_modulos_plantilla = new stdClass();
+        //                 $objeto_elemento_modulos_plantilla->nombre_modulo = $modulo->nombre;
+        //                 $objeto_elemento_modulos_plantilla->tipo_modulo = $modulo->tipo_modulo;
+        //                 $objeto_elemento_modulos_plantilla->imgurl = $this->determinar_icono_modulo($modulo->tipo_modulo);
+        //                 $objeto_elemento_modulos_plantilla->porcentaje = $ponderacion->porcentaje;
+        //                 $objeto_elemento_modulos_plantilla->palabra_clave = $ponderacion->palabra_clave;
+                        
+        //                 array_push($array_modulos_plantilla, $objeto_elemento_modulos_plantilla);
+        //             }
+        //         }
+        //     }
+        // }
+
+        foreach ($plantilla_a_usar->ponderaciones as $ponderacion) {
+            $objeto_elemento_modulos_plantilla = new stdClass();
+            $objeto_elemento_modulos_plantilla->palabra_clave = $ponderacion->palabra_clave;
+            $objeto_elemento_modulos_plantilla->porcentaje = $ponderacion->porcentaje;
+            $objeto_elemento_modulos_plantilla->elementos = [];
+
+            foreach ($modulos_curso as $seccion) {
+                foreach ($seccion->modulos as $modulo) {
+                    if(strpos(strtoupper($modulo->nombre), strtoupper($objeto_elemento_modulos_plantilla->palabra_clave)) !== false){
+                        $objeto_elemento_modulos_plantilla->elementos
+                    }
+                }
+            }
+        }
+
+        var_dump($array_modulos_plantilla);
+
+    }
+    
+    public function determinar_icono_modulo($tipo_modulo){
+        global $OUTPUT;
+        $link_modulo = $OUTPUT->image_url('icon', 'mod_'.$tipo_modulo)->out();
+        return $link_modulo;
+    }    
 }

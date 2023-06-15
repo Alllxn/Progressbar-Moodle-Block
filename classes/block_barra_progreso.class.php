@@ -12,61 +12,6 @@ require_once($CFG->dirroot . "/blocks/barra_progreso/block_barra_progreso.php");
 
 class Barra_progreso extends block_barra_progreso{
     
-    public function sacar_modulos($id_curso){
-        global $DB;    
-
-        $secciones_sql = '
-            SELECT name, id
-            FROM {course_sections} 
-            WHERE {course_sections}.course = ?
-        ';
-        $secciones = $DB->get_recordset_sql($secciones_sql, [$id_curso]);
-        
-        $modulos_sql = '
-            SELECT cm.id as identificacion, mm.name as tipo_modulo, cm.instance as instancia
-            FROM {course_modules} cm
-            INNER JOIN {modules} mm
-            ON cm.module = mm.id
-            WHERE cm.section = ?
-        ';
-        
-        $contador_seccion = 0;
-        $secciones_modulos_curso = new stdClass;
-
-        foreach ($secciones as $seccion) {            
-            $obj_secciones = new stdClass;
-            $obj_secciones->nombre = ($seccion->name == "") ? "Tema $contador_seccion" : $seccion->name;
-            
-            $array_modulos = [];
-            $modulos = $DB->get_recordset_sql($modulos_sql, [$seccion->id]);
-            foreach ($modulos as $modulo) {
-                $obj_modulos = new stdClass;
-                $obj_modulos->id = $modulo->identificacion;
-                $obj_modulos->nombre = $this->sacar_nombre_modulo($modulo->instancia, $modulo->tipo_modulo);
-                $obj_modulos->tipo_modulo = $modulo->tipo_modulo;
-                array_push($array_modulos, $obj_modulos);
-            }
-
-            $obj_secciones->modulos = $array_modulos;
-
-            $secciones_modulos_curso->{$seccion->id} = $obj_secciones;
-
-            $contador_seccion++;
-        }
-
-        $json = json_encode($secciones_modulos_curso);
-        return $json;
-    }
-    
-    private function sacar_nombre_modulo($id_modulo, $tipo_modulo){
-        global $DB;
-
-        $sql = "SELECT name FROM mood_$tipo_modulo WHERE id = ?";
-        $fila = $DB->get_record_sql($sql, [$id_modulo]);
-        $nombre_modulo = ($fila->name) ? $fila->name : "no name | " . $tipo_modulo;
-
-        return $nombre_modulo;
-    }
 
     public function sacar_categorias(){
         global $DB;
@@ -205,10 +150,5 @@ class Barra_progreso extends block_barra_progreso{
         return $traducido;
     }
     
-    private function determinar_icono_modulo($tipo_modulo){
-        global $OUTPUT;
-        $link_modulo = $OUTPUT->image_url('icon', 'mod_'.$tipo_modulo)->out();
-        return $link_modulo;
-    }    
 
 }
