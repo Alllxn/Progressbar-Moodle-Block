@@ -64,12 +64,45 @@ class block_barra_progreso extends block_base {
         if( is_null($plantilla_a_usar) || ( isset($this->config) && $this->config->personalizar_barra == 0 && $plantilla_a_usar === 0 ) ){
             $contenido .= '<p>Es necesario ajustar los módulos que se quieren incluir en la barra de progreso</p>';
         }else{
+            $lista_modulos_filtrado_plantilla = $this->lista_modulos_por_plantilla();
+            // var_dump($lista_modulos_filtrado_plantilla);
+
+            $ponderacion = "<ul>";
+            foreach ($lista_modulos_filtrado_plantilla as $elemento_ponderacion_plantilla) {
+                // var_dump($elemento_ponderacion_plantilla);
+                $modulos = "";
+
+                if(count($elemento_ponderacion_plantilla->elementos) > 0){
+                    foreach ($elemento_ponderacion_plantilla->elementos as $elemento_modulo) {
+                        $modulos .= '<li>
+                        '.'$elemento_modulos'.'
+                        </li>';
+                        var_dump($elemento_modulo);
+                    }
+                }else{
+                    $modulos .= '<li>No existen modulos</li>';
+                }
+                
+                $ponderacion .= '<li>
+                    <p>Ponderación: '.$elemento_ponderacion_plantilla->porcentaje_total.'%</p>
+                    <div>
+                        <ul>
+                            '.$modulos.'
+                        </ul>
+                    </div>
+                </li>';
+            }
+            $ponderacion .= "<ul>";
+
+
             $contenido .= '<div id="contenedor_barra">
                 <div id="barra"></div>
                 <div id="info_barra">
                     <span>% Completado</span>
-                    '.$this->lista_modulos_por_plantilla().'
                 </div>
+                <div id="desgloce_barra">'.
+                $ponderacion
+                .'</div>
             </div>';
         }
 
@@ -210,6 +243,7 @@ class block_barra_progreso extends block_base {
             foreach ($modulos as $modulo) {
                 $obj_modulos = new stdClass;
                 $obj_modulos->id = $modulo->identificacion;
+                $obj_modulos->instancia = $modulo->instancia;
                 $obj_modulos->nombre = $this->sacar_nombre_modulo($modulo->instancia, $modulo->tipo_modulo);
                 $obj_modulos->tipo_modulo = $modulo->tipo_modulo;
                 array_push($array_modulos, $obj_modulos);
@@ -232,40 +266,39 @@ class block_barra_progreso extends block_base {
         $modulos_curso = json_decode($this->sacar_modulos($COURSE->id));
         $array_modulos_plantilla = [];
 
-        // foreach ($modulos_curso as $seccion) {
-        //     foreach ($seccion->modulos as $modulo) {
-        //         foreach ($plantilla_a_usar->ponderaciones as $ponderacion) {
-        //             if(strpos(strtoupper($modulo->nombre), strtoupper($ponderacion->palabra_clave)) !== false){
-        //                 $objeto_elemento_modulos_plantilla = new stdClass();
-        //                 $objeto_elemento_modulos_plantilla->nombre_modulo = $modulo->nombre;
-        //                 $objeto_elemento_modulos_plantilla->tipo_modulo = $modulo->tipo_modulo;
-        //                 $objeto_elemento_modulos_plantilla->imgurl = $this->determinar_icono_modulo($modulo->tipo_modulo);
-        //                 $objeto_elemento_modulos_plantilla->porcentaje = $ponderacion->porcentaje;
-        //                 $objeto_elemento_modulos_plantilla->palabra_clave = $ponderacion->palabra_clave;
-                        
-        //                 array_push($array_modulos_plantilla, $objeto_elemento_modulos_plantilla);
-        //             }
-        //         }
-        //     }
-        // }
-
         foreach ($plantilla_a_usar->ponderaciones as $ponderacion) {
-            $objeto_elemento_modulos_plantilla = new stdClass();
-            $objeto_elemento_modulos_plantilla->palabra_clave = $ponderacion->palabra_clave;
-            $objeto_elemento_modulos_plantilla->porcentaje = $ponderacion->porcentaje;
-            $objeto_elemento_modulos_plantilla->elementos = [];
+            $elemento_ponderacion = new stdClass();
+            $elemento_ponderacion->palabra_clave = $ponderacion->palabra_clave;
+            $elemento_ponderacion->porcentaje_total = $ponderacion->porcentaje;
+            $elemento_ponderacion->elementos = [];
 
             foreach ($modulos_curso as $seccion) {
                 foreach ($seccion->modulos as $modulo) {
-                    if(strpos(strtoupper($modulo->nombre), strtoupper($objeto_elemento_modulos_plantilla->palabra_clave)) !== false){
-                        $objeto_elemento_modulos_plantilla->elementos
+                    if(strpos(strtoupper($modulo->nombre), strtoupper($elemento_ponderacion->palabra_clave)) !== false){
+                        $modulo_ponderacion = new stdClass();
+                        $modulo_ponderacion->nombre_modulo = $modulo->nombre;
+                        $modulo_ponderacion->tipo_modulo = $modulo->tipo_modulo;
+                        $modulo_ponderacion->id_modulo = $modulo->id;
+                        $modulo_ponderacion->instancia = $modulo->instancia;
+                        $modulo_ponderacion->url_img = $this->determinar_icono_modulo($modulo->tipo_modulo);
+                        $modulo_ponderacion->estado_modulo = $this->obtener_progreso_y_nota($modulo_ponderacion->instancia, $modulo_ponderacion->tipo_modulo);
+                        array_push($elemento_ponderacion->elementos, $modulo_ponderacion);
                     }
                 }
             }
+
+            // $porcentaje_ponderacion_por_modulo = $elemento_ponderacion->porcentaje_total / count($elemento_ponderacion->elementos);
+            $porcentaje_ponderacion_por_modulo = (count($elemento_ponderacion->elementos) != 0) ? $elemento_ponderacion->porcentaje_total / count($elemento_ponderacion->elementos) : 0;
+
+            foreach ($elemento_ponderacion->elementos as $ponderacion) {
+                $ponderacion->porcentaje_ponderacion = $porcentaje_ponderacion_por_modulo;
+            }
+
+            array_push($array_modulos_plantilla, $elemento_ponderacion);
         }
 
-        var_dump($array_modulos_plantilla);
-
+        // var_dump($array_modulos_plantilla);
+        return $array_modulos_plantilla;
     }
     
     public function determinar_icono_modulo($tipo_modulo){
@@ -273,4 +306,122 @@ class block_barra_progreso extends block_base {
         $link_modulo = $OUTPUT->image_url('icon', 'mod_'.$tipo_modulo)->out();
         return $link_modulo;
     }    
+
+    private function obtener_progreso_y_nota($instancia, $tipo_modulo = ""){
+        global $DB, $USER;
+
+        $progreso = new stdClass;
+        $progreso->estado_actual = ["😓", "error"];
+        $progreso->cuenta_como_hecho = false;
+        $progreso->nota = "-";
+
+        switch ($tipo_modulo) {
+            case 'forum':
+                $sql_forum = "SELECT id 
+                        FROM {forum_discussions} 
+                        WHERE forum = ?";
+
+                $datos_sql_forum = $DB->get_records_sql($sql_forum, [$instancia]);
+
+                $progreso->estado_actual = ["❌", "No ha respondido en el foro"];
+                $progreso->nota = 0;
+                
+                foreach ($datos_sql_forum as $datos_forum) {
+                    $sql_discussions = "SELECT id 
+                                        FROM {forum_posts} 
+                                        WHERE discussion = ?
+                                        AND userid = ?";
+    
+                    $datos_sql_discussions = $DB->record_exists_sql($sql_discussions, [$datos_forum->id, $USER->id]);
+
+                    if($datos_sql_discussions) {
+                        $progreso->estado_actual = ["✅", "Ha respondido en el foro"];
+                        $progreso->cuenta_como_hecho = true;
+                        $progreso->nota = 10;
+                    }
+                }
+
+                break;
+            
+            case 'scorm':
+                $sql_scorm = 'SELECT MAX(CAST(value AS DECIMAL)) as max_value
+                            FROM {scorm_scoes_track} 
+                            WHERE scormid = ? 
+                            AND userid = ?
+                            AND element LIKE "cmi.core.score.raw"';
+
+                $datos_sql_scorm = $DB->get_record_sql($sql_scorm, [$instancia, $USER->id]);
+                $nota = $datos_sql_scorm->max_value;
+                $progreso->nota = $nota;
+
+                if($nota === NULL || $nota < 0){
+                    $progreso->estado_actual = ["❌", "No realizado"];
+                    $progreso->nota = 0;
+                }else{
+                    $progreso->estado_actual = ["✅", "Realizado"];
+                    $progreso->cuenta_como_hecho = true;
+                }
+
+                break;
+
+            case 'assign':
+                $sql_assign = 'SELECT ab.status as estado, ag.grade as nota
+                FROM {assign_submission} ab
+                left join {assign_grades} ag 
+                on ag.assignment = ab.assignment 
+                AND ag.userid = ab.userid
+                WHERE ab.assignment = ?
+                AND ab.userid = ?';
+
+                $datos_sql_assign = $DB->get_record_sql($sql_assign, [$instancia, $USER->id]);
+
+                if($datos_sql_assign){
+                    $nota = $datos_sql_assign->nota;
+                    $progreso->nota = $nota;
+                    if($datos_sql_assign->estado === NULL || $datos_sql_assign->estado === "new"){
+                        $progreso->estado_actual = ["❌", "No se ha entregado"];
+                        $progreso->nota = 0;                
+                    }else if($datos_sql_assign->estado === "submitted" && ($datos_sql_assign->nota === NULL || $datos_sql_assign->nota < 0)){
+                        $progreso->estado_actual = ["⚠️", "Entregado pero no corregido"];
+                        $progreso->cuenta_como_hecho = true;
+                    }else if($datos_sql_assign->estado === "submitted" && $datos_sql_assign->nota >= 0){
+                        $progreso->estado_actual = ["✅", "Entregado y corregido"];
+                        $progreso->cuenta_como_hecho = true;
+                    }
+                }else{
+                    $progreso->estado_actual = ["❌", "No realizado"];
+                    $progreso->nota = 0;               
+                }
+
+                break;
+
+                
+            case 'quiz':
+                $sql_quiz = 'SELECT grade 
+                            FROM {quiz_grades} 
+                            WHERE quiz = ? 
+                            AND userid = ?';
+                
+                $datos_sql_quiz = $DB->get_record_sql($sql_quiz, [$instancia, $USER->id]);
+                $detalles_nota = ($datos_sql_quiz) ? $datos_sql_quiz->grade : NULL;
+                $progreso->nota = $detalles_nota;
+                
+                if($detalles_nota != NULL){
+                    $progreso->estado_actual = ["✅", "Realizado"];
+                    $progreso->cuenta_como_hecho = true;
+                }else{
+                    $progreso->estado_actual = ["❌", "No realizado"];
+                    $progreso->nota = 0;     
+                }
+
+                break;
+
+            default:
+
+                break;
+        }
+
+        $progreso->nota = ($progreso->nota > 10) ? round($progreso->nota / 10, 3) : round($progreso->nota, 3);
+        return $progreso;
+    }
 }
